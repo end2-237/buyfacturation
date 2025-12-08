@@ -1,0 +1,23 @@
+{
+    "tables": [
+      {
+        "name": "users",
+        "fields": [
+          { "name": "id", "type": "string", "primary": true },
+          { "name": "username", "type": "string" },
+          { "name": "email", "type": "string" },
+          { "name": "createdAt", "type": "date" }
+        ]
+      },
+      {
+        "name": "products",
+        "fields": [
+          { "name": "id", "type": "string", "primary": true },
+          { "name": "name", "type": "string" },
+          { "name": "price", "type": "number" },
+          { "name": "stock", "type": "number" }
+        ]
+      }
+    ]
+  }
+  
