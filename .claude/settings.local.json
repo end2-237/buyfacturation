@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(anthropic-skills:docx)",
+      "Skill(anthropic-skills:docx:*)",
+      "Read(//c/Users/Administrateur/Downloads/**)",
+      "Bash(pandoc \"Facture_Camille_Essai \\(1\\).docx\" -o facture1.md)",
+      "PowerShell(python \"C:\\\\Users\\\\Administrateur\\\\AppData\\\\Roaming\\\\Claude\\\\local-agent-mode-sessions\\\\skills-plugin\\\\dc072c78-6696-4e97-81db-74c6ee662319\\\\e321742c-0411-4d92-8918-1ee2d1140fa2\\\\skills\\\\docx\\\\scripts\\\\office\\\\unpack.py\" \"C:\\\\Users\\\\Administrateur\\\\Downloads\\\\Facture_Camille_Essai \\(1\\).docx\" \"C:\\\\Users\\\\Administrateur\\\\Downloads\\\\facture1_unpacked\")",
+      "mcp__Claude_Preview__preview_start",
+      "mcp__Claude_in_Chrome__tabs_context_mcp"
+    ]
+  }
+}
