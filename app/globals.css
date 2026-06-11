@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+:root {
+  --brand: #DD5509;
+  --brand-d: #B8450A;
+  --brand-l: #FEF0E8;
+  --nav: #0D1B2E;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Arial, sans-serif; background: #E8EAEE; }
