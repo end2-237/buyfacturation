@@ -1,12 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, Plus } from "lucide-react";
+import { LayoutDashboard, FileText, Plus, Code2 } from "lucide-react";
 
 const nav = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Tableau de bord" },
   { href: "/invoices", icon: FileText, label: "Factures" },
   { href: "/invoices/new", icon: Plus, label: "Nouvelle facture" },
+  { href: "/docs", icon: Code2, label: "Documentation API" },
 ];
 
 export default function Sidebar() {
