@@ -1,7 +1,7 @@
 # BuyFacturation — API de facturation
 
 API REST + interface web pour **créer, afficher, télécharger (PDF) et envoyer (email)** des factures.
-Construit pour **BUYTICLE ETS** et utilisable par d'autres applications.
+Construit pour **BUYTICLE ETS ** et utilisable par d'autres applications.
 
 **Stack :** Next.js 15 (App Router) · Supabase (PostgreSQL) · @react-pdf/renderer · Nodemailer · déployé sur Vercel.
 
