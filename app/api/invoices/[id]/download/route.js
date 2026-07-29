@@ -1,3 +1,7 @@
+// Cette route reste volontairement SANS cle d'API : elle est consommee par des
+// clients qui ne peuvent pas porter d'en-tete (WhatsApp via camille-core
+// telecharge le PDF depuis son URL). La protection repose sur l'UUID, non
+// devinable. Ne pas y exposer de liste ni de recherche.
 import { supabase } from "@/lib/supabase";
 import { generatePdf } from "@/lib/pdf";
 import { NextResponse } from "next/server";

@@ -1,7 +1,11 @@
 import { supabase } from "@/lib/supabase";
+import { requireApiKey } from "@/lib/apiAuth";
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
+  const denied = requireApiKey(request);
+  if (denied) return denied;
+
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type");
   const status = searchParams.get("status");
@@ -26,7 +30,20 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const denied = requireApiKey(request);
+  if (denied) return denied;
+
   const body = await request.json();
+
+  // Idempotence : un appelant externe peut réessayer (bouton tapé deux fois,
+  // relance après timeout). Avec external_ref, on renvoie le document existant
+  // au lieu d'en créer un doublon.
+  if (body.external_ref) {
+    const { data: existing } = await supabase
+      .from("invoices").select("*").eq("external_ref", body.external_ref).maybeSingle();
+    if (existing) return NextResponse.json(existing, { status: 200 });
+  }
+
   const { data, error } = await supabase.from("invoices").insert(body).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json(data, { status: 201 });
