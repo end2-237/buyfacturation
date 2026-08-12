@@ -18,7 +18,23 @@ function MetaRow({ label, value, vs = {} }) {
   );
 }
 
+function fmt(n) {
+  return Number(n || 0).toLocaleString("fr-FR").replace(/[\u202f\u00a0]/g, " ") + " FCFA";
+}
+
 export default function InvoicePreviewAbonnement({ d }) {
+  // Meme regle que dans le PDF (lib/pdf.js) : rien de du, c'est un essai ;
+  // un montant du, c'est une facture. L'apercu et le document imprime ne
+  // doivent jamais raconter deux choses differentes.
+  const items = Array.isArray(d.items) && d.items.length
+    ? d.items
+    : [{ description: `Abonnement Plateforme « ${d.platform || ""} » — Forfait Entreprise`, quantity: 1, price: 0 }];
+  const total = items.reduce((acc, i) => acc + (i.quantity || 1) * Number(i.price || 0), 0);
+  const essai = total <= 0;
+  const debut = d.period_start || d.trial_start;
+  const fin   = d.period_end   || d.trial_end;
+  const validite = debut && fin ? `Du ${fmtDate(debut)} au ${fmtDate(fin)}` : "[ Du JJ/MM/2026 au JJ/MM/2026 ]";
+
   return (
     <div style={{ fontFamily: "Arial,sans-serif", color: C.black, fontSize: "9pt", lineHeight: 1.4, padding: "19mm", background: "#fff", width: "210mm", minHeight: "297mm", boxSizing: "border-box" }}>
       <table style={{ width: "100%", borderCollapse: "collapse" }}><tbody><tr>
@@ -36,9 +52,15 @@ export default function InvoicePreviewAbonnement({ d }) {
       </tr></tbody></table>
       <div style={{ borderBottom: `3px solid ${C.orange}`, margin: "10px 0 14px" }} />
       <div style={{ fontWeight: "bold", fontSize: "23pt", color: C.orange, marginBottom: 8 }}>FACTURE D&apos;ABONNEMENT</div>
-      <div style={{ display: "inline-block", background: C.orange, color: "#fff", fontWeight: "bold", fontSize: "7.5pt", padding: "3px 10px", marginBottom: 12 }}>
-        PÉRIODE D&apos;ESSAI · {d.trial_months || "2"} MOIS
-      </div>
+      {essai ? (
+        <div style={{ display: "inline-block", background: C.orange, color: "#fff", fontWeight: "bold", fontSize: "7.5pt", padding: "3px 10px", marginBottom: 12 }}>
+          PÉRIODE D&apos;ESSAI · {d.trial_months || "2"} MOIS
+        </div>
+      ) : d.status === "paid" ? (
+        <div style={{ display: "inline-block", background: "#0F7B4F", color: "#fff", fontWeight: "bold", fontSize: "7.5pt", padding: "3px 10px", marginBottom: 12 }}>
+          ACQUITTÉE
+        </div>
+      ) : null}
       <div style={{ fontSize: "9pt", color: C.gray, marginBottom: 18 }}>
         Plateforme émettrice :{" "}
         <span style={{ fontWeight: "bold", color: C.black }}>{d.platform || ""}</span>
@@ -57,7 +79,7 @@ export default function InvoicePreviewAbonnement({ d }) {
           <MetaRow label="N° de facture" value={d.number} vs={{ fontWeight: "bold", color: C.darkOrange }} />
           <MetaRow label="Date d'émission" value={fmtDate(d.date) || "[ JJ / MM / 2026 ]"} />
           <MetaRow label="Type de document" value="Facture d'abonnement" />
-          <MetaRow label="Statut" value={d.statut || "Période d'essai"} />
+          <MetaRow label="Statut" value={d.statut || (essai ? "Période d'essai" : "Payé")} />
         </td>
       </tr></tbody></table>
 
@@ -68,41 +90,70 @@ export default function InvoicePreviewAbonnement({ d }) {
           <th style={{ textAlign: "right", padding: "6px 8px", color: "#fff", fontSize: "8pt", width: "18%" }}>PRIX UNIT.</th>
           <th style={{ textAlign: "right", padding: "6px 8px", color: "#fff", fontSize: "8pt", width: "18%" }}>MONTANT</th>
         </tr></thead>
-        <tbody><tr>
-          <td style={{ padding: "7px 8px", borderTop: `1px solid ${C.lineGray}`, borderBottom: `1px solid ${C.lineGray}` }}>
-            <div style={{ fontWeight: "bold", fontSize: "9pt" }}>Abonnement Plateforme « {d.platform} » — Forfait Entreprise</div>
-            <div style={{ fontStyle: "italic", fontSize: "8pt", color: C.gray }}>Période d&apos;essai de {d.trial_months || "2"} mois incluse.</div>
-            <div style={{ fontSize: "8pt", color: C.darkOrange }}>
-              Validité : {d.trial_start && d.trial_end ? `Du ${fmtDate(d.trial_start)} au ${fmtDate(d.trial_end)}` : "[ Du JJ/MM/2026 au JJ/MM/2026 ]"}
-            </div>
-          </td>
-          <td style={{ textAlign: "center", padding: "7px 8px", borderTop: `1px solid ${C.lineGray}`, borderBottom: `1px solid ${C.lineGray}` }}>1</td>
-          <td style={{ textAlign: "right", padding: "7px 8px", borderTop: `1px solid ${C.lineGray}`, borderBottom: `1px solid ${C.lineGray}` }}>0 FCFA</td>
-          <td style={{ textAlign: "right", padding: "7px 8px", borderTop: `1px solid ${C.lineGray}`, borderBottom: `1px solid ${C.lineGray}` }}>0 FCFA</td>
-        </tr></tbody>
+        <tbody>
+          {items.map((it, i) => {
+            const cell = { padding: "7px 8px", borderTop: `1px solid ${C.lineGray}`, borderBottom: `1px solid ${C.lineGray}` };
+            return (
+              <tr key={i}>
+                <td style={cell}>
+                  <div style={{ fontWeight: "bold", fontSize: "9pt" }}>{it.description}</div>
+                  {essai && (
+                    <div style={{ fontStyle: "italic", fontSize: "8pt", color: C.gray }}>
+                      Période d&apos;essai de {d.trial_months || "2"} mois incluse.
+                    </div>
+                  )}
+                  <div style={{ fontSize: "8pt", color: C.darkOrange }}>Validité : {validite}</div>
+                </td>
+                <td style={{ ...cell, textAlign: "center" }}>{it.quantity || 1}</td>
+                <td style={{ ...cell, textAlign: "right" }}>{essai ? "—" : fmt(it.price)}</td>
+                <td style={{ ...cell, textAlign: "right" }}>
+                  {essai ? "GRATUIT" : fmt((it.quantity || 1) * Number(it.price || 0))}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
       </table>
 
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
         <table style={{ borderCollapse: "collapse", width: 240 }}><tbody>
           <tr><td style={{ padding: "4px 8px", fontSize: "9pt" }}>TVA</td><td style={{ padding: "4px 8px", textAlign: "right", fontSize: "9pt", color: C.gray }}>Non applicable</td></tr>
           <tr style={{ background: C.orange }}>
-            <td style={{ padding: "6px 8px", fontSize: "9.5pt", fontWeight: "bold", color: "#fff" }}>NET À PAYER (ESSAI)</td>
-            <td style={{ padding: "6px 8px", textAlign: "right", fontSize: "9.5pt", fontWeight: "bold", color: "#fff" }}>0 FCFA</td>
+            <td style={{ padding: "6px 8px", fontSize: "9.5pt", fontWeight: "bold", color: "#fff" }}>
+              {essai ? "NET À PAYER (ESSAI)" : "TOTAL NET À PAYER"}
+            </td>
+            <td style={{ padding: "6px 8px", textAlign: "right", fontSize: "9.5pt", fontWeight: "bold", color: "#fff" }}>
+              {essai ? "0 FCFA" : fmt(total)}
+            </td>
           </tr>
         </tbody></table>
       </div>
 
       <div style={{ borderLeft: `3px solid ${C.orange}`, background: C.bgLight, padding: "10px 12px", marginBottom: 12 }}>
-        <div style={{ fontWeight: "bold", fontSize: "9.5pt", color: C.darkOrange, marginBottom: 6 }}>Note relative au Forfait Entreprise</div>
-        <div style={{ fontSize: "9pt" }}>
-          Conformément à nos conditions générales, cet abonnement bénéficie d&apos;une période d&apos;essai gratuite de {d.trial_months || "2"} mois.
-          À l&apos;échéance de cette période ({d.trial_end ? fmtDate(d.trial_end) : "[ Date de fin ]"}), la tarification finale sera appliquée.
-        </div>
+        {essai ? (
+          <>
+            <div style={{ fontWeight: "bold", fontSize: "9.5pt", color: C.darkOrange, marginBottom: 6 }}>Note relative au Forfait Entreprise</div>
+            <div style={{ fontSize: "9pt" }}>
+              Conformément à nos conditions générales, cet abonnement bénéficie d&apos;une période d&apos;essai gratuite de {d.trial_months || "2"} mois.
+              À l&apos;échéance de cette période ({fin ? fmtDate(fin) : "[ Date de fin ]"}), la tarification finale sera appliquée.
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ fontWeight: "bold", fontSize: "9.5pt", color: C.darkOrange, marginBottom: 6 }}>Note relative à l&apos;abonnement</div>
+            <div style={{ fontSize: "9pt" }}>
+              Cet abonnement est réglé pour la période indiquée ci-dessus. Au terme de cette période,
+              il doit être renouvelé pour que la boutique reste visible sur la plateforme.
+            </div>
+          </>
+        )}
       </div>
       <div style={{ borderLeft: `3px solid ${C.gray}`, background: C.bgPale, padding: "8px 12px", marginBottom: 16 }}>
         <span style={{ fontSize: "9pt" }}>Facture arrêtée à la somme de </span>
-        <span style={{ fontWeight: "bold", fontSize: "9pt" }}>zéro Franc CFA</span>
-        <span style={{ fontSize: "9pt" }}> au titre de la période d&apos;essai.</span>
+        <span style={{ fontWeight: "bold", fontSize: "9pt" }}>
+          {essai ? "zéro Franc CFA" : `${total.toLocaleString("fr-FR").replace(/[\u202f\u00a0]/g, " ")} francs CFA`}
+        </span>
+        <span style={{ fontSize: "9pt" }}>{essai ? " au titre de la période d'essai." : "."}</span>
       </div>
 
       <div style={{ borderTop: `2px solid ${C.lineGray}`, paddingTop: 8, textAlign: "center" }}>
