@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import InvoiceActions from "@/components/InvoiceActions";
 import InvoicePreviewAbonnement from "@/components/InvoicePreviewAbonnement";
+import InvoicePreviewRecu from "@/components/InvoicePreviewRecu";
 import InvoicePreviewStandard from "@/components/InvoicePreviewStandard";
 
 const D = { brand: "#DD5509", white: "#FFFFFF", bdr: "#DCE0E8", tx1: "#0F1623", tx3: "#8896A8" };
@@ -35,8 +36,8 @@ export default async function InvoicePage({ params }) {
       </div>
 
       <div style={{ overflow: "auto" }}>
-        {inv.type === "abonnement"
-          ? <InvoicePreviewAbonnement d={inv} />
+        {inv.type === "abonnement" ? <InvoicePreviewAbonnement d={inv} />
+          : inv.type === "recu"     ? <InvoicePreviewRecu d={inv} />
           : <InvoicePreviewStandard d={inv} />}
       </div>
     </div>

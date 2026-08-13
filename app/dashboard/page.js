@@ -3,6 +3,16 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { FileText, Plus } from "lucide-react";
 
+// Chaque type a sa couleur : un recu de versement ne se confond pas d'un coup
+// d'oeil avec une facture, l'argent n'y va pas dans le meme sens.
+const TYPE_BADGE = {
+  standard:     { label: "Standard",        bg: "#DBEAFE", fg: "#1E40AF" },
+  abonnement:   { label: "Abonnement",      bg: "#FEF0E8", fg: "#DD5509" },
+  bon_commande: { label: "Bon de commande", bg: "#EDE9FE", fg: "#5B21B6" },
+  recu:         { label: "Reçu",            bg: "#DCFCE7", fg: "#0F7B4F" },
+};
+
+
 const D = { brand: "#DD5509", white: "#FFFFFF", bdr: "#DCE0E8", tx1: "#0F1623", tx2: "#4A5568", tx3: "#8896A8" };
 
 function fmt(n) { return Number(n || 0).toLocaleString("fr-FR"); }
@@ -78,8 +88,8 @@ export default async function DashboardPage() {
                 </td>
                 <td style={{ padding: "12px 16px", color: D.tx1 }}>{inv.client_name}</td>
                 <td style={{ padding: "12px 16px" }}>
-                  <span style={{ background: inv.type === "abonnement" ? "#FEF0E8" : "#DBEAFE", color: inv.type === "abonnement" ? D.brand : "#1E40AF", borderRadius: 4, padding: "2px 8px", fontSize: 11, fontWeight: "600" }}>
-                    {inv.type === "abonnement" ? "Abonnement" : "Standard"}
+                  <span style={{ background: TYPE_BADGE[inv.type]?.bg || "#DBEAFE", color: TYPE_BADGE[inv.type]?.fg || "#1E40AF", borderRadius: 4, padding: "2px 8px", fontSize: 11, fontWeight: "600" }}>
+                    {TYPE_BADGE[inv.type]?.label || "Standard"}
                   </span>
                 </td>
                 <td style={{ padding: "12px 16px", color: D.tx2, fontSize: 13 }}>{new Date(inv.date).toLocaleDateString("fr-FR")}</td>
