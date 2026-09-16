@@ -32,8 +32,11 @@ export default async function PayPage({ params }) {
         borderRadius: 16, overflow: "hidden", background: "#fff",
         boxShadow: "0 24px 60px rgba(0,0,0,.35)",
       }}>
-        {/* Gauche — récapitulatif (sombre, épuré) */}
-        <div style={{ flex: "1 1 320px", minWidth: 300, background: "#0D1B2E", color: "#fff", padding: 36, display: "flex", flexDirection: "column" }}>
+        {/* Gauche — récapitulatif (image finance + overlay net) */}
+        <div style={{ flex: "1 1 320px", minWidth: 300, position: "relative", color: "#fff", padding: 36, display: "flex", flexDirection: "column", overflow: "hidden", backgroundColor: "#0D1B2E" }}>
+          <div style={{ position: "absolute", inset: 0, backgroundImage: "url(https://images.unsplash.com/photo-1620714223084-8fcacc6dfd8d?auto=format&fit=crop&w=1200&q=80)", backgroundSize: "cover", backgroundPosition: "center", opacity: 0.28 }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(165deg, rgba(13,27,46,.90) 0%, rgba(13,27,46,.82) 55%, rgba(9,20,35,.94) 100%)" }} />
+          <div style={{ position: "relative", display: "flex", flexDirection: "column", height: "100%" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 10 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={LOGO} alt="BUYTICLE" style={{ width: 40, height: 40, borderRadius: 9, objectFit: "contain", background: "#fff", padding: 4 }} />
@@ -68,6 +71,7 @@ export default async function PayPage({ params }) {
               style={{ display: "inline-flex", alignItems: "center", gap: 7, marginTop: 16, fontSize: 12.5, color: "rgba(255,255,255,.7)", textDecoration: "none", borderBottom: "1px solid rgba(255,255,255,.25)", paddingBottom: 2 }}>
               ⭳ Télécharger ma facture (PDF)
             </a>
+          </div>
           </div>
         </div>
 

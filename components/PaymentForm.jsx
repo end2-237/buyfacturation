@@ -1,12 +1,34 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 
-const OPERATEURS = [
-  { key: "MTN", label: "MTN MoMo", sub: "MTN Mobile Money", bg: "#FFCB05", text: "#1a1a1a", mark: "MTN" },
-  { key: "ORANGE", label: "Orange Money", sub: "Orange Money", bg: "#FF7900", text: "#fff", mark: "orange" },
-];
-
 function fmt(n) { return Number(n || 0).toLocaleString("fr-FR").replace(/[  ]/g, " "); }
+
+// Logo MTN (marque : ovale jaune, « MTN » bleu, arc rouge).
+function MtnLogo() {
+  return (
+    <svg width="58" height="34" viewBox="0 0 116 68" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="58" cy="34" rx="57" ry="33" fill="#FFCB05" stroke="#F2B900" strokeWidth="1.5" />
+      <text x="58" y="40" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="800" fontSize="30" fill="#00457C" letterSpacing="1">MTN</text>
+      <path d="M22 50 Q58 62 94 50" stroke="#E4002B" strokeWidth="4" fill="none" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// Logo Orange (marque : carré orange, « orange » blanc en bas).
+function OrangeLogo() {
+  return (
+    <svg width="42" height="34" viewBox="0 0 84 68" xmlns="http://www.w3.org/2000/svg">
+      <rect width="84" height="68" rx="6" fill="#FF7900" />
+      <rect x="10" y="46" width="12" height="12" fill="#fff" />
+      <text x="26" y="57" fontFamily="Arial, sans-serif" fontWeight="800" fontSize="15" fill="#fff">range</text>
+    </svg>
+  );
+}
+
+const OPERATEURS = [
+  { key: "MTN", label: "MTN MoMo", Logo: MtnLogo },
+  { key: "ORANGE", label: "Orange Money", Logo: OrangeLogo },
+];
 
 export default function PaymentForm({ invoiceId, montant }) {
   const [operateur, setOperateur] = useState("");
@@ -46,15 +68,13 @@ export default function PaymentForm({ invoiceId, montant }) {
     } catch { setPhase("failed"); setMessage("Erreur réseau. Veuillez réessayer."); }
   }
 
-  const reset = () => { setPhase("form"); setMessage(""); };
-
   if (phase === "waiting") {
     return (
       <div style={{ textAlign: "center", padding: "40px 0" }}>
         <div style={{ width: 46, height: 46, border: "4px solid #F0F0F0", borderTopColor: "#DD5509", borderRadius: "50%", margin: "0 auto 18px", animation: "spin 1s linear infinite" }} />
-        <div style={{ fontWeight: 700, color: "#0F1728", fontSize: 16 }}>Validez sur votre téléphone</div>
+        <div style={{ fontWeight: 700, color: "#101828", fontSize: 16 }}>Validez sur votre téléphone</div>
         <div style={{ fontSize: 13, color: "#667085", marginTop: 8, lineHeight: 1.5 }}>
-          Une demande de paiement de <strong>{fmt(montant)} FCFA</strong> a été envoyée au <strong>{numero}</strong>.<br />
+          Une demande de <strong>{fmt(montant)} FCFA</strong> a été envoyée au <strong>{numero}</strong>.<br />
           Saisissez votre code {operateur === "MTN" ? "MTN MoMo" : "Orange Money"} pour confirmer.
         </div>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
@@ -65,9 +85,9 @@ export default function PaymentForm({ invoiceId, montant }) {
   if (phase === "done") {
     return (
       <div style={{ textAlign: "center", padding: "40px 0" }}>
-        <div style={{ width: 66, height: 66, borderRadius: "50%", background: "#E7F7EF", color: "#0F7B4F", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34, margin: "0 auto 16px" }}>✓</div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: "#0F1728" }}>Paiement confirmé !</div>
-        <div style={{ fontSize: 13, color: "#667085", marginTop: 6 }}>Merci, votre règlement de {fmt(montant)} FCFA a bien été reçu.</div>
+        <div style={{ width: 66, height: 66, borderRadius: "50%", background: "#ECFDF3", color: "#12B76A", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34, margin: "0 auto 16px" }}>✓</div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: "#101828" }}>Paiement confirmé</div>
+        <div style={{ fontSize: 13, color: "#667085", marginTop: 6 }}>Votre règlement de {fmt(montant)} FCFA a bien été reçu. Merci !</div>
         <a href={`/api/invoices/${invoiceId}/download`} target="_blank" rel="noopener noreferrer"
           style={{ display: "inline-block", marginTop: 18, color: "#DD5509", fontWeight: 600, fontSize: 13, textDecoration: "none" }}>⭳ Télécharger le reçu</a>
       </div>
@@ -77,20 +97,18 @@ export default function PaymentForm({ invoiceId, montant }) {
   return (
     <form onSubmit={pay}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 22 }}>
-        {OPERATEURS.map((o) => {
-          const active = operateur === o.key;
+        {OPERATEURS.map(({ key, label, Logo }) => {
+          const active = operateur === key;
           return (
-            <button type="button" key={o.key} onClick={() => setOperateur(o.key)}
+            <button type="button" key={key} onClick={() => setOperateur(key)}
               style={{
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "16px 10px", cursor: "pointer",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "18px 10px", cursor: "pointer",
                 borderRadius: 12, background: "#fff",
                 border: active ? "2px solid #DD5509" : "1px solid #E4E7EC",
-                boxShadow: active ? "0 4px 14px rgba(221,85,9,.15)" : "none",
+                boxShadow: active ? "0 4px 14px rgba(221,85,9,.14)" : "none",
               }}>
-              <span style={{ width: 54, height: 34, borderRadius: 7, background: o.bg, color: o.text, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: o.mark === "orange" ? 10 : 13, letterSpacing: .5, textTransform: "uppercase" }}>
-                {o.mark === "orange" ? "orange" : "MTN"}
-              </span>
-              <span style={{ fontSize: 12.5, fontWeight: 600, color: "#0F1728" }}>{o.label}</span>
+              <span style={{ height: 34, display: "flex", alignItems: "center" }}><Logo /></span>
+              <span style={{ fontSize: 12.5, fontWeight: 600, color: "#101828" }}>{label}</span>
             </button>
           );
         })}
@@ -105,9 +123,9 @@ export default function PaymentForm({ invoiceId, montant }) {
 
       <button type="submit" style={{
         width: "100%", background: "#DD5509", color: "#fff", border: "none", borderRadius: 11,
-        padding: 15, fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+        padding: 15, fontSize: 15, fontWeight: 700, cursor: "pointer",
       }}>
-        Payer {fmt(montant)} FCFA →
+        Payer {fmt(montant)} FCFA
       </button>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 16, fontSize: 11.5, color: "#98A2B3" }}>
