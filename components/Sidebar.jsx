@@ -87,7 +87,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Rail — navigation globale + logo (une seule fois) */}
-      <div style={{ ...sticky, width: 56, background: "#fff", borderRight: `1px solid ${C.line}`, display: "flex", flexDirection: "column", alignItems: "center", padding: "16px 0", gap: 4, fontFamily: "Arial, sans-serif" }}>
+      <div style={{ ...sticky, width: 56, background: "#fff", borderRight: `1px solid ${C.line}`, display: "flex", flexDirection: "column", alignItems: "center", padding: "16px 0", gap: 4 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={LOGO} alt="BUYTICLE" style={{ width: 28, height: 28, borderRadius: 8, objectFit: "contain", marginBottom: 12 }} />
         {RAIL.map(({ href, icon: Icon, title }) => {
@@ -108,7 +108,7 @@ export default function Sidebar() {
       </div>
 
       {/* Panneau — contexte de la page (varie), sans logo ni doublon */}
-      <div style={{ ...sticky, width: 208, background: "#fff", borderRight: `1px solid ${C.line}`, padding: "18px 14px", display: "flex", flexDirection: "column", overflowY: "auto", fontFamily: "Arial, sans-serif" }}>
+      <div style={{ ...sticky, width: 208, background: "#fff", borderRight: `1px solid ${C.line}`, padding: "18px 14px", display: "flex", flexDirection: "column", overflowY: "auto" }}>
         <div style={{ padding: "0 4px 14px" }}>
           <div style={{ fontWeight: 700, fontSize: 15, color: C.ink }}>{ctx.title}</div>
           <div style={{ fontSize: 11, color: C.faint, marginTop: 1 }}>{ctx.subtitle}</div>

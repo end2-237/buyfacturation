@@ -1,5 +1,8 @@
 import "./globals.css";
+import { Inter } from "next/font/google";
 import Sidebar from "@/components/Sidebar";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata = {
   title: "BuyFacturation — BUYTICLE ETS",
@@ -11,7 +14,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fr">
+    <html lang="fr" className={inter.variable}>
       <body style={{ display: "flex", minHeight: "100vh" }}>
         <Sidebar />
         <main style={{ flex: 1, padding: "28px", overflowY: "auto" }}>
