@@ -23,7 +23,7 @@ export default async function PayPage({ params }) {
 
   return (
     <div style={{
-      minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+      margin: -28, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
       padding: 24, boxSizing: "border-box",
       background: "#0D1B2E",
     }}>
