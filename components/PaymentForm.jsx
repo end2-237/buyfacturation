@@ -3,31 +3,9 @@ import { useState, useRef, useEffect } from "react";
 
 function fmt(n) { return Number(n || 0).toLocaleString("fr-FR").replace(/[  ]/g, " "); }
 
-// Logo MTN (marque : ovale jaune, « MTN » bleu, arc rouge).
-function MtnLogo() {
-  return (
-    <svg width="58" height="34" viewBox="0 0 116 68" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="58" cy="34" rx="57" ry="33" fill="#FFCB05" stroke="#F2B900" strokeWidth="1.5" />
-      <text x="58" y="40" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="800" fontSize="30" fill="#00457C" letterSpacing="1">MTN</text>
-      <path d="M22 50 Q58 62 94 50" stroke="#E4002B" strokeWidth="4" fill="none" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-// Logo Orange (marque : carré orange, « orange » blanc en bas).
-function OrangeLogo() {
-  return (
-    <svg width="42" height="34" viewBox="0 0 84 68" xmlns="http://www.w3.org/2000/svg">
-      <rect width="84" height="68" rx="6" fill="#FF7900" />
-      <rect x="10" y="46" width="12" height="12" fill="#fff" />
-      <text x="26" y="57" fontFamily="Arial, sans-serif" fontWeight="800" fontSize="15" fill="#fff">range</text>
-    </svg>
-  );
-}
-
 const OPERATEURS = [
-  { key: "MTN", label: "MTN MoMo", Logo: MtnLogo },
-  { key: "ORANGE", label: "Orange Money", Logo: OrangeLogo },
+  { key: "MTN", label: "MTN MoMo", logo: "/brand/mtn-momo.jpg" },
+  { key: "ORANGE", label: "Orange Money", logo: "/brand/orange-money.png" },
 ];
 
 export default function PaymentForm({ invoiceId, montant }) {
@@ -97,17 +75,20 @@ export default function PaymentForm({ invoiceId, montant }) {
   return (
     <form onSubmit={pay}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 22 }}>
-        {OPERATEURS.map(({ key, label, Logo }) => {
+        {OPERATEURS.map(({ key, label, logo }) => {
           const active = operateur === key;
           return (
             <button type="button" key={key} onClick={() => setOperateur(key)}
               style={{
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "18px 10px", cursor: "pointer",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "16px 10px", cursor: "pointer",
                 borderRadius: 12, background: "#fff",
                 border: active ? "2px solid #DD5509" : "1px solid #E4E7EC",
                 boxShadow: active ? "0 4px 14px rgba(221,85,9,.14)" : "none",
               }}>
-              <span style={{ height: 34, display: "flex", alignItems: "center" }}><Logo /></span>
+              <span style={{ height: 38, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logo} alt={label} style={{ maxHeight: 38, maxWidth: 96, objectFit: "contain" }} />
+              </span>
               <span style={{ fontSize: 12.5, fontWeight: 600, color: "#101828" }}>{label}</span>
             </button>
           );
