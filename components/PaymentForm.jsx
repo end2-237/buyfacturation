@@ -80,10 +80,11 @@ export default function PaymentForm({ invoiceId, montant }) {
           return (
             <button type="button" key={key} onClick={() => setOperateur(key)}
               style={{
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "16px 10px", cursor: "pointer",
-                borderRadius: 0, background: "#fff",
-                border: active ? "2px solid #DD5509" : "1px solid #E4E7EC",
-                boxShadow: active ? "0 4px 14px rgba(221,85,9,.14)" : "none",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "18px 10px", cursor: "pointer",
+                borderRadius: 0, background: active ? "#FFF7F2" : "#fff",
+                border: active ? "1px solid #DD5509" : "1px solid #E4E7EC",
+                borderTop: active ? "3px solid #DD5509" : "3px solid transparent",
+                transition: "all .15s",
               }}>
               <span style={{ height: 38, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -95,7 +96,7 @@ export default function PaymentForm({ invoiceId, montant }) {
         })}
       </div>
 
-      <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: "#344054", marginBottom: 6 }}>Numéro Mobile Money</label>
+      <label style={{ display: "block", fontSize: 10.5, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "#667085", marginBottom: 8 }}>Numéro Mobile Money</label>
       <input value={numero} onChange={(e) => setNumero(e.target.value)} required placeholder="6XX XX XX XX"
         style={{ width: "100%", border: "1px solid #E4E7EC", borderRadius: 0, padding: "13px 14px", fontSize: 15, marginBottom: 8, outline: "none", boxSizing: "border-box" }} />
       <div style={{ fontSize: 11.5, color: "#98A2B3", marginBottom: 20 }}>Vous recevrez une demande de confirmation sur ce numéro.</div>
@@ -104,9 +105,10 @@ export default function PaymentForm({ invoiceId, montant }) {
 
       <button type="submit" style={{
         width: "100%", background: "#DD5509", color: "#fff", border: "none", borderRadius: 0,
-        padding: 15, fontSize: 15, fontWeight: 700, cursor: "pointer",
+        padding: 16, fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer",
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
       }}>
-        Payer {fmt(montant)} FCFA
+        <span>Payer {fmt(montant)} FCFA</span><span style={{ fontSize: 16 }}>→</span>
       </button>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 16, fontSize: 11.5, color: "#98A2B3" }}>

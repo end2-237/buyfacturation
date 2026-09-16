@@ -28,9 +28,9 @@ export default async function PayPage({ params }) {
       background: "#0D1B2E",
     }}>
       <div style={{
-        width: 880, maxWidth: "100%", display: "flex", flexWrap: "wrap",
+        width: 900, maxWidth: "100%", display: "flex", flexWrap: "wrap",
         borderRadius: 0, overflow: "hidden", background: "#fff",
-        boxShadow: "0 24px 60px rgba(0,0,0,.35)",
+        borderLeft: "4px solid #DD5509",
       }}>
         {/* Gauche — récapitulatif (image finance + overlay net) */}
         <div style={{ flex: "1 1 320px", minWidth: 300, position: "relative", color: "#fff", padding: 36, display: "flex", flexDirection: "column", overflow: "hidden", backgroundColor: "#0D1B2E" }}>
@@ -87,8 +87,9 @@ export default async function PayPage({ params }) {
             <div style={{ textAlign: "center", color: "#B54708", fontSize: 14 }}>Cette facture n'a pas de montant à régler.</div>
           ) : (
             <>
-              <div style={{ fontSize: 19, fontWeight: 700, color: "#101828", marginBottom: 4 }}>Méthode de paiement</div>
-              <div style={{ fontSize: 13, color: "#667085", marginBottom: 26 }}>Réglez en toute sécurité par Mobile Money.</div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: "#DD5509", marginBottom: 8 }}>Paiement</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#101828", marginBottom: 6, letterSpacing: -0.3 }}>Méthode de paiement</div>
+              <div style={{ fontSize: 13, color: "#667085", marginBottom: 28 }}>Réglez en toute sécurité par Mobile Money.</div>
               <PaymentForm invoiceId={inv.id} montant={montant} />
             </>
           )}
