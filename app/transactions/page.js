@@ -13,12 +13,19 @@ const statutColor = {
 
 function fmt(n) { return Number(n || 0).toLocaleString("fr-FR"); }
 
-export default async function TransactionsPage() {
-  const { data: txs } = await supabase.from("transactions").select("*").order("created_at", { ascending: false });
+export default async function TransactionsPage({ searchParams }) {
+  const statut = searchParams?.status || "";
+  let query = supabase.from("transactions").select("*").order("created_at", { ascending: false });
+  if (statut) query = query.eq("statut", statut);
+  const [{ data: txs }, { data: allTxs }] = await Promise.all([
+    query,
+    supabase.from("transactions").select("montant,statut"),
+  ]);
   const all = txs || [];
+  const global = allTxs || [];
 
-  const encaisse = all.filter(t => t.statut === "COMPLETED").reduce((s, t) => s + Number(t.montant || 0), 0);
-  const pending = all.filter(t => t.statut === "PENDING" || t.statut === "ACCEPTED").length;
+  const encaisse = global.filter(t => t.statut === "COMPLETED").reduce((s, t) => s + Number(t.montant || 0), 0);
+  const pending = global.filter(t => t.statut === "PENDING" || t.statut === "ACCEPTED").length;
 
   return (
     <div>
@@ -32,7 +39,7 @@ export default async function TransactionsPage() {
         </div>
         <div style={{ flex: 1, background: D.white, borderRadius: 10, padding: "18px 22px", border: `1px solid ${D.bdr}` }}>
           <div style={{ fontSize: 11, color: D.tx3, textTransform: "uppercase" }}>Transactions</div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: D.tx1 }}>{all.length}</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: D.tx1 }}>{global.length}</div>
         </div>
         <div style={{ flex: 1, background: D.white, borderRadius: 10, padding: "18px 22px", border: `1px solid ${D.bdr}` }}>
           <div style={{ fontSize: 11, color: D.tx3, textTransform: "uppercase" }}>En attente</div>
