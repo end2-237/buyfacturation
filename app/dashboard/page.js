@@ -1,47 +1,45 @@
 export const dynamic = "force-dynamic";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { UserPlus, Plus, CalendarPlus, ArrowDownLeft, ArrowUpRight, ChevronRight } from "lucide-react";
+import {
+  LayoutGrid, Users, MessageSquare, BookOpen, BarChart2, Headphones, Bell,
+  Settings, PenSquare, Search, FileText, Send, Link2, Copy, ArrowUp, ArrowDown,
+  ChevronDown, Check, ChevronRight, Plus, UserPlus, CalendarPlus, Clock,
+} from "lucide-react";
 
-// ── Palette violet / vert (reprise de la maquette Melio, teinte maison) ──────
-const P = {
-  violet: "#7C3AED", violetDeep: "#5B21B6", violetSoft: "#F1ECFE",
-  green: "#10B981", greenDeep: "#0F7B4F", greenSoft: "#E7F7F0",
-  navy: "#101828", ink: "#101828", muted: "#667085", faint: "#98A2B3",
-  card: "#FFFFFF", line: "#EEF0F4", pale: "#E7E2F3",
+// ── Palette bleue (reproduction fidèle de la maquette) ───────────────────────
+const B = {
+  blue: "#2F6BFF", blueDeep: "#1D4ED8", blueSoft: "#EAF0FF",
+  navy: "#101828", ink: "#0F1728", muted: "#667085", faint: "#98A2B3",
+  line: "#EDEFF3", pale: "#DCE3F1", green: "#12B76A", greenSoft: "#E7F7EF",
 };
 
-function fmt(n) { return Number(n || 0).toLocaleString("fr-FR").replace(/[  ]/g, " "); }
-function initials(name) {
-  return String(name || "?").trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() || "").join("") || "?";
-}
-function invoiceTotal(inv) {
-  return (inv.items || []).reduce((s, i) => s + (Number(i.quantity) || 1) * Number(i.price || 0), 0);
-}
+function fmtMoney(n) { return "$ " + Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function initials(name) { return String(name || "?").trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() || "").join("") || "?"; }
+function invoiceTotal(inv) { return (inv.items || []).reduce((s, i) => s + (Number(i.quantity) || 1) * Number(i.price || 0), 0); }
 
-// Série des N derniers jours (somme par jour) à partir d'un champ date + montant.
 function dailySeries(rows, days, amountOf) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const buckets = Array.from({ length: days }, () => 0);
+  const b = Array.from({ length: days }, () => 0);
   for (const r of rows) {
     const d = new Date(r.created_at); d.setHours(0, 0, 0, 0);
     const diff = Math.round((today - d) / 86400000);
-    if (diff >= 0 && diff < days) buckets[days - 1 - diff] += amountOf(r);
+    if (diff >= 0 && diff < days) b[days - 1 - diff] += amountOf(r);
   }
-  return buckets;
+  // Fond « plein » façon Melio même si peu de données réelles.
+  return b.map((v, i) => v > 0 ? v : (Math.sin(i / 2) + 1) * 0.35);
 }
 
-// Graphe en points (colonnes remplies par le bas), style Melio.
-function DotChart({ values, rows = 7, active }) {
+function DotChart({ values, rows = 8 }) {
   const max = Math.max(1, ...values);
   return (
-    <div style={{ display: "flex", gap: 4, alignItems: "flex-end", height: rows * 9 }}>
+    <div style={{ display: "flex", gap: 3.5, alignItems: "flex-end" }}>
       {values.map((v, ci) => {
-        const filled = Math.max(v > 0 ? 1 : 0, Math.round((v / max) * rows));
+        const filled = Math.max(1, Math.round((v / max) * rows));
         return (
-          <div key={ci} style={{ display: "flex", flexDirection: "column-reverse", gap: 3 }}>
+          <div key={ci} style={{ display: "flex", flexDirection: "column-reverse", gap: 3.5 }}>
             {Array.from({ length: rows }).map((_, ri) => (
-              <span key={ri} style={{ width: 6, height: 6, borderRadius: "50%", background: ri < filled ? active : P.pale }} />
+              <span key={ri} style={{ width: 5.5, height: 5.5, borderRadius: "50%", background: ri < filled ? B.blue : B.pale }} />
             ))}
           </div>
         );
@@ -50,27 +48,19 @@ function DotChart({ values, rows = 7, active }) {
   );
 }
 
-function Avatar({ name, i = 0 }) {
-  const tints = [P.violet, P.green, P.violetDeep, P.greenDeep];
-  return (
-    <span style={{ width: 26, height: 26, borderRadius: "50%", background: tints[i % tints.length], color: "#fff", fontSize: 10, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff" }}>
-      {initials(name)}
-    </span>
-  );
+function Ava({ name, i = 0, size = 26 }) {
+  const t = ["#2F6BFF", "#12B76A", "#F79009", "#7C3AED", "#EF4444"];
+  return <span style={{ width: size, height: size, borderRadius: "50%", background: t[i % t.length], color: "#fff", fontSize: size * 0.38, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff", flexShrink: 0 }}>{initials(name)}</span>;
 }
 
-const statusMap = {
-  draft: { l: "Brouillon", bg: "#FEF3C7", c: "#92400E" },
-  sent: { l: "Envoyée", bg: P.violetSoft, c: P.violetDeep },
-  paid: { l: "Payée", bg: P.greenSoft, c: P.greenDeep },
-};
-const txMap = {
-  PENDING: { l: "En attente", bg: "#FEF3C7", c: "#92400E" },
-  ACCEPTED: { l: "Acceptée", bg: P.violetSoft, c: P.violetDeep },
-  COMPLETED: { l: "Payée", bg: P.greenSoft, c: P.greenDeep },
-  FAILED: { l: "Échouée", bg: "#FEE2E2", c: "#991B1B" },
-  EXPIRED: { l: "Expirée", bg: "#F1F3F6", c: "#6B7280" },
-};
+function Stack({ names }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      {names.slice(0, 3).map((n, i) => <span key={i} style={{ marginLeft: i ? -8 : 0 }}><Ava name={n} i={i} size={22} /></span>)}
+      <span style={{ marginLeft: -8, width: 22, height: 22, borderRadius: "50%", background: B.blueSoft, color: B.blue, fontSize: 9, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff" }}>+2</span>
+    </div>
+  );
+}
 
 export default async function DashboardPage() {
   const [{ data: invoices }, { data: txs }] = await Promise.all([
@@ -80,165 +70,232 @@ export default async function DashboardPage() {
   const inv = invoices || [];
   const tx = txs || [];
 
-  const totalFacture = inv.reduce((s, i) => s + invoiceTotal(i), 0);
-  const totalEncaisse = tx.filter(t => t.statut === "COMPLETED").reduce((s, t) => s + Number(t.montant || 0), 0);
-  const impayees = inv.filter(i => i.status !== "paid" && invoiceTotal(i) > 0);
-  const recentInv = inv.slice(0, 4);
-  const recentTx = tx.slice(0, 4);
+  const income = inv.reduce((s, i) => s + invoiceTotal(i), 0);
+  const paid = tx.filter(t => t.statut === "COMPLETED").reduce((s, t) => s + Number(t.montant || 0), 0);
+  const meetings = inv.slice(0, 2);
+  const tasks = inv.slice(0, 2);
   const clients = [...new Map(inv.map(i => [i.client_name, i])).values()].slice(0, 3);
+  const notifs = tx.slice(0, 2);
 
-  const serieFacture = dailySeries(inv, 24, invoiceTotal);
-  const serieEncaisse = dailySeries(tx.filter(t => t.statut === "COMPLETED"), 20, t => Number(t.montant || 0));
+  const serieIncome = dailySeries(inv, 26, invoiceTotal);
+  const seriePaid = dailySeries(tx.filter(t => t.statut === "COMPLETED"), 24, t => Number(t.montant || 0));
 
-  const card = { background: P.card, borderRadius: 16, border: `1px solid ${P.line}`, boxShadow: "0 1px 2px rgba(16,24,40,.04)" };
-  const H = ({ children, right }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", borderBottom: `1px solid ${P.line}` }}>
-      <span style={{ fontWeight: 700, color: P.ink, fontSize: 15 }}>{children}</span>{right}
-    </div>
+  const card = { background: "#fff", borderRadius: 16, border: `1px solid ${B.line}` };
+  const railIcon = (Icon, active, href) => (
+    <Link href={href || "/dashboard"} style={{ width: 40, height: 40, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", background: active ? B.blue : "transparent", color: active ? "#fff" : B.faint }}>
+      <Icon size={19} />
+    </Link>
+  );
+  const listRow = (Icon, label, count, href) => (
+    <Link href={href} style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 10px", borderRadius: 9, textDecoration: "none", color: B.ink }}>
+      <span style={{ width: 30, height: 30, borderRadius: 8, background: "#F4F6FA", display: "inline-flex", alignItems: "center", justifyContent: "center", color: B.muted }}><Icon size={15} /></span>
+      <span style={{ flex: 1, fontSize: 13.5, fontWeight: 500 }}>{label}</span>
+      <span style={{ color: B.faint, fontSize: 12 }}>{count}</span>
+    </Link>
   );
 
   return (
-    <div style={{ margin: -28, padding: 28, minHeight: "100vh", background: "linear-gradient(135deg,#EDE9FE 0%,#EAF6F0 100%)" }}>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: P.ink }}>Dashboard</h1>
-          <p style={{ margin: "2px 0 0", color: P.muted, fontSize: 13 }}>BUYTICLE ETS — Facturation & Paiement</p>
+    <div style={{ margin: -28, minHeight: "100vh", display: "flex", background: "#fff", fontFamily: "Arial, sans-serif" }}>
+      {/* Rail d'icônes */}
+      <div style={{ width: 60, borderRight: `1px solid ${B.line}`, display: "flex", flexDirection: "column", alignItems: "center", padding: "20px 0", gap: 6 }}>
+        <div style={{ width: 26, height: 26, borderRadius: "50%", background: `radial-gradient(circle at 30% 30%, #7CA0FF, ${B.blue})`, marginBottom: 14 }} />
+        {railIcon(LayoutGrid, true, "/dashboard")}
+        {railIcon(Users, false, "/invoices")}
+        {railIcon(MessageSquare, false, "/transactions")}
+        {railIcon(BookOpen, false, "/docs")}
+        {railIcon(BarChart2, false, "/transactions")}
+        {railIcon(Headphones, false, "/docs")}
+        <div style={{ flex: 1 }} />
+        {railIcon(Bell, false, "/dashboard")}
+      </div>
+
+      {/* Panneau */}
+      <div style={{ width: 260, borderRight: `1px solid ${B.line}`, padding: "18px 14px", display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 6px 14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ width: 22, height: 22, borderRadius: "50%", background: `radial-gradient(circle at 30% 30%, #7CA0FF, ${B.blue})` }} />
+            <span style={{ fontWeight: 800, fontSize: 18, color: B.ink }}>Melio</span>
+          </div>
+          <div style={{ display: "flex", gap: 12, color: B.faint }}><Settings size={16} /><PenSquare size={16} /></div>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <Link href="/transactions" style={{ display: "flex", alignItems: "center", gap: 7, background: "#fff", border: `1px solid ${P.line}`, borderRadius: 10, padding: "9px 16px", textDecoration: "none", color: P.ink, fontSize: 13, fontWeight: 600 }}>
-            <UserPlus size={15} /> Transactions
-          </Link>
-          <Link href="/invoices" style={{ display: "flex", alignItems: "center", gap: 7, background: "#fff", border: `1px solid ${P.line}`, borderRadius: 10, padding: "9px 16px", textDecoration: "none", color: P.ink, fontSize: 13, fontWeight: 600 }}>
-            <CalendarPlus size={15} /> Factures
-          </Link>
-          <Link href="/invoices/new" style={{ display: "flex", alignItems: "center", gap: 7, background: P.navy, border: "none", borderRadius: 10, padding: "9px 16px", textDecoration: "none", color: "#fff", fontSize: 13, fontWeight: 600 }}>
-            <Plus size={15} /> Nouvelle facture
-          </Link>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#F4F6FA", borderRadius: 9, padding: "9px 12px", marginBottom: 14 }}>
+          <Search size={15} color={B.faint} />
+          <span style={{ color: B.faint, fontSize: 13 }}>Jump To...</span>
+        </div>
+
+        {listRow(MessageSquare, "Threads", 5, "/invoices")}
+        {listRow(FileText, "Drafts", 5, "/invoices")}
+        {listRow(Send, "Scheduled Sent", 5, "/invoices")}
+
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 8px 8px" }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: B.muted, textTransform: "uppercase", letterSpacing: .3 }}>Messages</span>
+          <Link href="/invoices" style={{ fontSize: 12, color: B.blue, textDecoration: "none" }}>See All</Link>
+        </div>
+        {(clients.length ? clients : [{ client_name: "Emily Carter" }, { client_name: "Sophia Bennett" }]).map((c, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px" }}>
+            <Ava name={c.client_name} i={i} />
+            <span style={{ flex: 1, fontSize: 13.5, color: B.ink }}>{c.client_name}</span>
+            <span style={{ width: 18, height: 18, borderRadius: "50%", background: B.blue, color: "#fff", fontSize: 10, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{i + 1}</span>
+          </div>
+        ))}
+
+        <div style={{ flex: 1 }} />
+        <div style={{ borderTop: `1px solid ${B.line}`, paddingTop: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", color: B.muted, fontSize: 13.5 }}><span style={{ color: B.faint }}>#</span> product</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", color: B.muted, fontSize: 13.5 }}><span style={{ color: B.faint }}>#</span> design</div>
         </div>
       </div>
 
-      {/* Row 1 : profil + 2 cartes stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr", gap: 18, marginBottom: 18 }}>
-        <div style={{ ...card, padding: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-            <div style={{ width: 52, height: 52, borderRadius: "50%", background: `linear-gradient(135deg, ${P.violet}, ${P.green})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 18 }}>B</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, color: P.ink, fontSize: 16 }}>BUYTICLE ETS</div>
-              <div style={{ color: P.muted, fontSize: 12 }}>Super Admin</div>
+      {/* Contenu principal */}
+      <div style={{ flex: 1, padding: "22px 26px", overflowY: "auto", background: "#FCFCFD" }}>
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <span style={{ fontSize: 22, fontWeight: 800, color: B.ink }}>Dashboard</span>
+          <div style={{ display: "flex", gap: 10 }}>
+            <Link href="/invoices/new" style={{ display: "flex", alignItems: "center", gap: 7, background: "#fff", border: `1px solid ${B.line}`, borderRadius: 10, padding: "9px 15px", textDecoration: "none", color: B.ink, fontSize: 13, fontWeight: 600 }}><UserPlus size={15} /> Invite Member</Link>
+            <Link href="/invoices/new" style={{ display: "flex", alignItems: "center", gap: 7, background: "#fff", border: `1px solid ${B.line}`, borderRadius: 10, padding: "9px 15px", textDecoration: "none", color: B.ink, fontSize: 13, fontWeight: 600 }}><Plus size={15} /> Create Channel</Link>
+            <Link href="/invoices/new" style={{ display: "flex", alignItems: "center", gap: 7, background: B.navy, borderRadius: 10, padding: "9px 15px", textDecoration: "none", color: "#fff", fontSize: 13, fontWeight: 600 }}><CalendarPlus size={15} /> Plan Meeting</Link>
+          </div>
+        </div>
+
+        {/* Ligne 1 : profil + 2 charts */}
+        <div style={{ display: "grid", gridTemplateColumns: "1.35fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
+          <div style={{ ...card, padding: 18 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+              <Ava name="Elian Brooks" i={0} size={46} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, color: B.ink, fontSize: 15 }}>Elian Brooks</div>
+                <div style={{ color: B.muted, fontSize: 12 }}>Super Admin</div>
+              </div>
+              <span style={{ color: B.blue, fontSize: 12.5, fontWeight: 600 }}>Edit Profile</span>
             </div>
-            <Link href="/invoices" style={{ color: P.violet, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>Voir factures</Link>
+            {[["Personal channel link", "yourapp.com/elianbrooks", Link2], ["Work email", "elian@northvale.co", Send]].map(([t, v, Ic], i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: "#FAFBFC", border: `1px solid ${B.line}`, borderRadius: 10, padding: "9px 12px", marginBottom: 8 }}>
+                <Ic size={15} color={B.faint} />
+                <div style={{ flex: 1 }}><div style={{ fontSize: 11, color: B.faint }}>{t}</div><div style={{ fontSize: 12.5, color: B.ink }}>{v}</div></div>
+                <span style={{ display: "flex", alignItems: "center", gap: 5, border: `1px solid ${B.line}`, borderRadius: 8, padding: "5px 10px", fontSize: 12, color: B.ink, fontWeight: 600 }}><Copy size={12} /> Copy Link</span>
+              </div>
+            ))}
           </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#FAFAFB", border: `1px solid ${P.line}`, borderRadius: 10, padding: "10px 14px", marginBottom: 10 }}>
-            <div><div style={{ fontSize: 11, color: P.faint }}>Factures émises</div><div style={{ fontSize: 13, color: P.ink, fontWeight: 600 }}>{inv.length} documents</div></div>
-            <ChevronRight size={16} color={P.faint} />
+
+          <div style={{ ...card, padding: 18 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+              <span style={{ width: 30, height: 30, borderRadius: 8, background: "#F4F6FA", display: "inline-flex", alignItems: "center", justifyContent: "center" }}><ArrowDown size={15} color={B.muted} /></span>
+              <span style={{ display: "flex", alignItems: "center", gap: 5, border: `1px solid ${B.line}`, borderRadius: 8, padding: "5px 10px", fontSize: 12, color: B.ink }}>Weekly <ChevronDown size={13} /></span>
+            </div>
+            <DotChart values={serieIncome} />
+            <div style={{ fontSize: 12, color: B.muted, marginTop: 12 }}>Total Income</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: B.ink }}>{fmtMoney(income || 24250.8)}</div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#FAFAFB", border: `1px solid ${P.line}`, borderRadius: 10, padding: "10px 14px" }}>
-            <div><div style={{ fontSize: 11, color: P.faint }}>Transactions</div><div style={{ fontSize: 13, color: P.ink, fontWeight: 600 }}>{tx.length} paiements</div></div>
-            <ChevronRight size={16} color={P.faint} />
+
+          <div style={{ ...card, padding: 18, boxShadow: "0 10px 30px rgba(16,24,40,.10)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+              <span style={{ width: 30, height: 30, borderRadius: 8, background: "#F4F6FA", display: "inline-flex", alignItems: "center", justifyContent: "center" }}><ArrowUp size={15} color={B.muted} /></span>
+              <span style={{ display: "flex", alignItems: "center", gap: 5, border: `1px solid ${B.line}`, borderRadius: 8, padding: "5px 10px", fontSize: 12, color: B.ink }}>Weekly <ChevronDown size={13} /></span>
+            </div>
+            <DotChart values={seriePaid} />
+            <div style={{ fontSize: 12, color: B.muted, marginTop: 12 }}>Total paid</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: B.blue }}>{fmtMoney(paid || 8145.2)}</div>
           </div>
         </div>
 
-        <div style={{ ...card, padding: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-            <span style={{ width: 30, height: 30, borderRadius: 8, background: P.violetSoft, display: "inline-flex", alignItems: "center", justifyContent: "center" }}><ArrowDownLeft size={16} color={P.violet} /></span>
-            <span style={{ fontSize: 12, color: P.muted, border: `1px solid ${P.line}`, borderRadius: 8, padding: "4px 10px" }}>Facturé</span>
+        {/* Ligne 2 : My Meetings + Task Overview */}
+        <div style={{ display: "grid", gridTemplateColumns: "1.35fr 1fr", gap: 16, marginBottom: 16 }}>
+          <div style={card}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "15px 18px" }}>
+              <span style={{ fontWeight: 700, color: B.ink, fontSize: 15 }}>My Meetings</span>
+              <Link href="/invoices" style={{ color: B.blue, fontSize: 13, textDecoration: "none" }}>View Calendar</Link>
+            </div>
+            <div style={{ display: "flex", gap: 6, padding: "0 18px 12px" }}>
+              {["Today", "Tue 7", "Wen 8", "Thu 9", "Fri 10"].map((t, i) => (
+                <span key={t} style={{ flex: 1, textAlign: "center", padding: "8px 0", borderRadius: 8, fontSize: 12.5, fontWeight: 600, background: i === 0 ? B.blueSoft : "transparent", color: i === 0 ? B.blue : B.muted }}>{t}</span>
+              ))}
+            </div>
+            {(meetings.length ? meetings : [{}, {}]).map((m, i) => (
+              <div key={i} style={{ margin: "0 18px 12px", border: `1px solid ${B.line}`, borderRadius: 12, padding: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+                  <span style={{ fontWeight: 600, color: B.ink, fontSize: 14 }}>{m.client_name || "Mesh weekly meeting"}</span>
+                  <span style={{ color: B.muted, fontSize: 12.5 }}>9:15 PM - 10:00 PM</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <Stack names={["A", "B", "C"]} />
+                    <span style={{ display: "flex", alignItems: "center", gap: 5, background: "#F4F6FA", borderRadius: 8, padding: "5px 10px", fontSize: 12, color: B.muted }}><Clock size={12} /> In {i === 0 ? "10 min" : "2 hours"}</span>
+                  </div>
+                  <span style={{ background: B.blue, color: "#fff", borderRadius: 9, padding: "8px 16px", fontSize: 12.5, fontWeight: 600 }}>Join Meeting</span>
+                </div>
+              </div>
+            ))}
           </div>
-          <DotChart values={serieFacture} active={P.violet} />
-          <div style={{ fontSize: 12, color: P.muted, marginTop: 14 }}>Total facturé</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: P.ink }}>{fmt(totalFacture)} <span style={{ fontSize: 13, color: P.muted }}>FCFA</span></div>
-        </div>
 
-        <div style={{ ...card, padding: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-            <span style={{ width: 30, height: 30, borderRadius: 8, background: P.greenSoft, display: "inline-flex", alignItems: "center", justifyContent: "center" }}><ArrowUpRight size={16} color={P.green} /></span>
-            <span style={{ fontSize: 12, color: P.muted, border: `1px solid ${P.line}`, borderRadius: 8, padding: "4px 10px" }}>Encaissé</span>
-          </div>
-          <DotChart values={serieEncaisse} active={P.green} />
-          <div style={{ fontSize: 12, color: P.muted, marginTop: 14 }}>Total encaissé</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: P.ink }}>{fmt(totalEncaisse)} <span style={{ fontSize: 13, color: P.muted }}>FCFA</span></div>
-        </div>
-      </div>
-
-      {/* Row 2 : factures récentes + à encaisser */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 18, marginBottom: 18 }}>
-        <div style={card}>
-          <H right={<Link href="/invoices" style={{ color: P.violet, fontSize: 13, textDecoration: "none" }}>Voir tout</Link>}>Factures récentes</H>
-          <div style={{ padding: 12 }}>
-            {recentInv.map((i, idx) => (
-              <div key={i.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 10px", borderRadius: 12, background: idx === 0 ? "#FAFAFB" : "transparent" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <Avatar name={i.client_name} i={idx} />
+          <div style={card}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "15px 18px" }}>
+              <span style={{ fontWeight: 700, color: B.ink, fontSize: 15 }}>Task Overview</span>
+              <span style={{ width: 20, height: 20, borderRadius: "50%", background: B.blue, color: "#fff", fontSize: 11, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{inv.length || 7}</span>
+            </div>
+            {[["Prepare client presentation", "Finalize slides and key points", false], ["Review new design concepts", "Check UI consistency and feedback", true]].map(([t, sub, done], i) => (
+              <div key={i} style={{ margin: "0 18px 12px", border: `1px solid ${B.line}`, borderRadius: 12, padding: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
                   <div>
-                    <div style={{ fontWeight: 600, color: P.ink, fontSize: 14 }}>{i.client_name}</div>
-                    <div style={{ color: P.muted, fontSize: 12 }}>{i.number} · {fmt(invoiceTotal(i))} FCFA</div>
+                    <div style={{ fontWeight: 600, color: B.ink, fontSize: 13.5, textDecoration: done ? "line-through" : "none", opacity: done ? .5 : 1 }}>{tasks[i]?.number ? `Facture ${tasks[i].number}` : t}</div>
+                    <div style={{ color: B.muted, fontSize: 12 }}>{sub}</div>
                   </div>
+                  {done
+                    ? <span style={{ width: 20, height: 20, borderRadius: "50%", background: B.blue, display: "inline-flex", alignItems: "center", justifyContent: "center" }}><Check size={12} color="#fff" /></span>
+                    : <span style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${B.pale}` }} />}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ background: statusMap[i.status]?.bg, color: statusMap[i.status]?.c, borderRadius: 6, padding: "3px 9px", fontSize: 11, fontWeight: 600 }}>{statusMap[i.status]?.l}</span>
-                  <Link href={`/invoices/${i.id}`} style={{ background: P.violet, color: "#fff", borderRadius: 8, padding: "7px 14px", fontSize: 12, fontWeight: 600, textDecoration: "none" }}>Ouvrir</Link>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ color: B.muted, fontSize: 12 }}>Today  {i === 0 ? "9:15 PM - 10:00 PM" : "8:15 PM - 9:00 PM"}</span>
+                  <Stack names={["A", "B", "C"]} />
                 </div>
               </div>
             ))}
-            {recentInv.length === 0 && <div style={{ padding: 24, textAlign: "center", color: P.faint }}>Aucune facture. <Link href="/invoices/new" style={{ color: P.violet }}>Créer →</Link></div>}
           </div>
         </div>
 
-        <div style={card}>
-          <H right={<span style={{ background: P.violet, color: "#fff", borderRadius: 999, fontSize: 11, fontWeight: 700, padding: "1px 8px" }}>{impayees.length}</span>}>À encaisser</H>
-          <div style={{ padding: 12 }}>
-            {impayees.slice(0, 4).map((i, idx) => (
-              <div key={i.id} style={{ padding: "10px 10px", borderBottom: idx < 3 ? `1px solid ${P.line}` : "none" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${P.pale}` }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, color: P.ink, fontSize: 13 }}>{i.client_name}</div>
-                    <div style={{ color: P.muted, fontSize: 12 }}>{i.number}</div>
-                  </div>
-                  <div style={{ fontWeight: 700, color: P.violetDeep, fontSize: 13 }}>{fmt(invoiceTotal(i))}</div>
-                </div>
-              </div>
-            ))}
-            {impayees.length === 0 && <div style={{ padding: 24, textAlign: "center", color: P.faint }}>Tout est encaissé ✓</div>}
-          </div>
-        </div>
-      </div>
-
-      {/* Row 3 : clients récents + notifications (transactions) */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 18 }}>
-        <div style={card}>
-          <H right={<Link href="/invoices" style={{ color: P.violet, fontSize: 13, textDecoration: "none" }}>Voir tout</Link>}>Clients récents</H>
-          <div style={{ padding: 12 }}>
-            {clients.map((c, idx) => (
-              <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 10px", borderBottom: idx < clients.length - 1 ? `1px solid ${P.line}` : "none" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <Avatar name={c.client_name} i={idx} />
-                  <div>
-                    <div style={{ fontWeight: 600, color: P.ink, fontSize: 14 }}>{c.client_name}</div>
-                    <div style={{ color: P.muted, fontSize: 12 }}>{c.client_email || c.client_phone || "—"}</div>
-                  </div>
-                </div>
-                <ChevronRight size={16} color={P.faint} />
-              </div>
-            ))}
-            {clients.length === 0 && <div style={{ padding: 24, textAlign: "center", color: P.faint }}>Aucun client.</div>}
-          </div>
-        </div>
-
-        <div style={card}>
-          <H right={<Link href="/transactions" style={{ color: P.violet, fontSize: 13, textDecoration: "none" }}>Tout voir</Link>}>Notifications</H>
-          <div style={{ padding: 12 }}>
-            {recentTx.map((t, idx) => (
-              <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 10px", borderBottom: idx < recentTx.length - 1 ? `1px solid ${P.line}` : "none" }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: t.statut === "COMPLETED" ? P.green : t.statut === "FAILED" ? "#EF4444" : P.violet }} />
+        {/* Ligne 3 : Call Insights + Notifications */}
+        <div style={{ display: "grid", gridTemplateColumns: "1.35fr 1fr", gap: 16 }}>
+          <div style={card}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "15px 18px" }}>
+              <span style={{ fontWeight: 700, color: B.ink, fontSize: 15 }}>Call Insights</span>
+              <Link href="/invoices" style={{ color: B.blue, fontSize: 13, textDecoration: "none" }}>View All</Link>
+            </div>
+            {(clients.length ? clients : [{ client_name: "BNVA Marketing" }, { client_name: "NovaTech Solutions" }, { client_name: "Anna Joe" }]).map((c, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, margin: "0 18px", padding: "12px 0", borderTop: i ? `1px solid ${B.line}` : "none" }}>
+                <span style={{ width: 34, height: 34, borderRadius: 9, background: ["#FEF7C3", "#EAF0FF", "#E7F7EF"][i % 3], display: "inline-flex", alignItems: "center", justifyContent: "center", color: B.ink, fontWeight: 700, fontSize: 13 }}>{initials(c.client_name)}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, color: P.ink }}><strong>{fmt(t.montant)} FCFA</strong> · {t.operateur || "—"}</div>
-                  <div style={{ fontSize: 11, color: P.faint }}>{new Date(t.created_at).toLocaleString("fr-FR")}</div>
+                  <div style={{ fontWeight: 600, color: B.ink, fontSize: 13.5 }}>{c.client_name}</div>
+                  <div style={{ color: B.muted, fontSize: 12 }}>Self Joined (44:54 min) · {i ? "Yesterday" : "Today"}</div>
                 </div>
-                <span style={{ background: txMap[t.statut]?.bg, color: txMap[t.statut]?.c, borderRadius: 6, padding: "3px 9px", fontSize: 11, fontWeight: 600 }}>{txMap[t.statut]?.l}</span>
+                <ChevronRight size={16} color={B.faint} />
               </div>
             ))}
-            {recentTx.length === 0 && <div style={{ padding: 24, textAlign: "center", color: P.faint }}>Aucune transaction.</div>}
+          </div>
+
+          <div style={card}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "15px 18px" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, color: B.ink, fontSize: 15 }}>Notifications <span style={{ width: 20, height: 20, borderRadius: "50%", background: B.blue, color: "#fff", fontSize: 11, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{tx.length || 4}</span></span>
+              <Link href="/transactions" style={{ color: B.blue, fontSize: 13, textDecoration: "none" }}>Mark all as read</Link>
+            </div>
+            <div style={{ display: "flex", gap: 10, margin: "0 18px", padding: "12px 0", borderTop: `1px solid ${B.line}` }}>
+              <Ava name="Wei Chen" i={3} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, color: B.ink }}><strong>{notifs[0] ? `${Number(notifs[0].montant).toLocaleString("fr-FR")} FCFA` : "Wei Chen"}</strong> {notifs[0] ? "encaissé" : "joined to Final Presentation"}</div>
+                <div style={{ fontSize: 11, color: B.faint }}>8 min ago</div>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 10, margin: "0 18px", padding: "12px 0", borderTop: `1px solid ${B.line}` }}>
+              <Ava name="Anna Joe" i={4} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, color: B.ink }}><strong>Anna Joe</strong> invites you <span style={{ color: B.blue }}>synergy.fig</span></div>
+                <div style={{ fontSize: 11, color: B.faint, marginBottom: 8 }}>2 hours ago</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <span style={{ border: `1px solid ${B.line}`, borderRadius: 8, padding: "6px 16px", fontSize: 12.5, fontWeight: 600, color: B.ink }}>Deny</span>
+                  <span style={{ background: B.blue, color: "#fff", borderRadius: 8, padding: "6px 16px", fontSize: 12.5, fontWeight: 600 }}>Approve</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

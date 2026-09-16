@@ -12,8 +12,8 @@ const nav = [
   { href: "/docs", icon: Code2, label: "Documentation API" },
 ];
 
-// Routes publiques : pas de sidebar admin.
-const HIDDEN = ["/login"];
+// Routes publiques ou à chrome propre : pas de sidebar admin.
+const HIDDEN = ["/login", "/dashboard"];
 
 export default function Sidebar() {
   const path = usePathname();
