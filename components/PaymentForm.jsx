@@ -81,7 +81,7 @@ export default function PaymentForm({ invoiceId, montant }) {
             <button type="button" key={key} onClick={() => setOperateur(key)}
               style={{
                 display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "16px 10px", cursor: "pointer",
-                borderRadius: 12, background: "#fff",
+                borderRadius: 0, background: "#fff",
                 border: active ? "2px solid #DD5509" : "1px solid #E4E7EC",
                 boxShadow: active ? "0 4px 14px rgba(221,85,9,.14)" : "none",
               }}>
@@ -97,13 +97,13 @@ export default function PaymentForm({ invoiceId, montant }) {
 
       <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: "#344054", marginBottom: 6 }}>Numéro Mobile Money</label>
       <input value={numero} onChange={(e) => setNumero(e.target.value)} required placeholder="6XX XX XX XX"
-        style={{ width: "100%", border: "1px solid #E4E7EC", borderRadius: 10, padding: "13px 14px", fontSize: 15, marginBottom: 8, outline: "none", boxSizing: "border-box" }} />
+        style={{ width: "100%", border: "1px solid #E4E7EC", borderRadius: 0, padding: "13px 14px", fontSize: 15, marginBottom: 8, outline: "none", boxSizing: "border-box" }} />
       <div style={{ fontSize: 11.5, color: "#98A2B3", marginBottom: 20 }}>Vous recevrez une demande de confirmation sur ce numéro.</div>
 
-      {message && <div style={{ color: "#B42318", fontSize: 12.5, marginBottom: 14, background: "#FEF3F2", border: "1px solid #FEE4E2", borderRadius: 8, padding: "9px 12px" }}>{message}</div>}
+      {message && <div style={{ color: "#B42318", fontSize: 12.5, marginBottom: 14, background: "#FEF3F2", border: "1px solid #FEE4E2", borderRadius: 0, padding: "9px 12px" }}>{message}</div>}
 
       <button type="submit" style={{
-        width: "100%", background: "#DD5509", color: "#fff", border: "none", borderRadius: 11,
+        width: "100%", background: "#DD5509", color: "#fff", border: "none", borderRadius: 0,
         padding: 15, fontSize: 15, fontWeight: 700, cursor: "pointer",
       }}>
         Payer {fmt(montant)} FCFA

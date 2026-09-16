@@ -29,7 +29,7 @@ export default async function PayPage({ params }) {
     }}>
       <div style={{
         width: 880, maxWidth: "100%", display: "flex", flexWrap: "wrap",
-        borderRadius: 16, overflow: "hidden", background: "#fff",
+        borderRadius: 0, overflow: "hidden", background: "#fff",
         boxShadow: "0 24px 60px rgba(0,0,0,.35)",
       }}>
         {/* Gauche — récapitulatif (image finance + overlay net) */}
@@ -39,7 +39,7 @@ export default async function PayPage({ params }) {
           <div style={{ position: "relative", display: "flex", flexDirection: "column", height: "100%" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 10 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={LOGO} alt="BUYTICLE" style={{ width: 40, height: 40, borderRadius: 9, objectFit: "contain", background: "#fff", padding: 4 }} />
+            <img src={LOGO} alt="BUYTICLE" style={{ width: 40, height: 40, borderRadius: 0, objectFit: "contain", background: "#fff", padding: 4 }} />
             <div style={{ fontWeight: 700, fontSize: 17, letterSpacing: .3 }}>BUYTICLE</div>
           </div>
           <div style={{ fontSize: 12.5, fontStyle: "italic", color: "rgba(255,255,255,.55)", marginBottom: 32 }}>
