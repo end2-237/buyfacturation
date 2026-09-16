@@ -274,13 +274,70 @@ const pdfUrl = `https://<app>.vercel.app/api/invoices/${invoice.id}/download`;
 
 ## Interface web
 
-| Route | Description |
-|-------|-------------|
-| `/dashboard` | Tableau de bord (métriques + factures récentes) |
-| `/invoices` | Liste avec recherche et filtres |
-| `/invoices/new` | Formulaire de création (standard / abonnement) avec aperçu |
-| `/invoices/[id]` | Détail + aperçu + boutons Télécharger / Envoyer |
-| `/invoices/[id]/edit` | Modification |
+| Route | Accès | Description |
+|-------|-------|-------------|
+| `/login` | public | Connexion (Supabase Auth) |
+| `/dashboard` | protégé | Tableau de bord (métriques + factures récentes) |
+| `/invoices` | protégé | Liste avec recherche et filtres |
+| `/invoices/new` | protégé | Formulaire de création (standard / abonnement) avec aperçu |
+| `/invoices/[id]` | protégé | Détail + Télécharger / Envoyer / Lien de paiement |
+| `/invoices/[id]/edit` | protégé | Modification |
+| `/transactions` | protégé | Vue centralisée des encaissements |
+| `/docs` | protégé | Documentation Swagger interactive |
+| `/pay/[id]` | **public** | Page de paiement mobile money d'une facture |
+
+---
+
+## Authentification (Supabase Auth)
+
+L'interface admin est protégée par un login email/mot de passe via **Supabase Auth**. L'API REST et les pages `/pay/[id]` restent publiques.
+
+**Créer un compte admin :** Supabase Dashboard → **Authentication → Users → Add user** (email + mot de passe, cocher « Auto Confirm »). Il n'y a pas d'inscription publique.
+
+Le middleware (`middleware.js`) protège `/dashboard`, `/invoices`, `/transactions`, `/docs` et redirige vers `/login`.
+
+---
+
+## Paiement mobile money (PawaPay)
+
+Chaque facture est payable en **MTN MoMo** ou **Orange Money** via PawaPay. La couche paiement est **abstraite** (`lib/payments/`) : PawaPay est un adaptateur, on peut brancher CinetPay plus tard sans toucher au reste.
+
+### Mise en place
+
+1. Exécuter [`supabase/transactions.sql`](./supabase/transactions.sql) dans le SQL Editor (table `transactions` centralisée).
+2. Ajouter les variables `PAWAPAY_*` (voir plus bas). Commencer par le **sandbox**.
+3. Configurer l'URL de webhook dans le dashboard PawaPay : `https://pay.buyticle.com/api/webhooks/pawapay`.
+
+### Flux
+
+```
+Facture → /pay/{id} → client choisit MTN/Orange + numéro
+   → POST /api/invoices/{id}/pay  (crée transaction PENDING + appelle PawaPay)
+   → push USSD sur le téléphone → client valide
+   → PawaPay → POST /api/webhooks/pawapay  (source de vérité → facture PAYÉE)
+   → le front poll GET /api/transactions/{id}/status
+```
+
+### Endpoints paiement
+
+| Méthode | Route | Accès | Rôle |
+|---------|-------|-------|------|
+| `POST` | `/api/invoices/{id}/pay` | public | Initier un paiement `{ numero, operateur }` |
+| `GET` | `/api/transactions/{id}/status` | public | Polling du statut |
+| `POST` | `/api/webhooks/pawapay` | public | Callback PawaPay (confirmation) |
+
+### Variables PawaPay
+
+| Variable | Description |
+|----------|-------------|
+| `PAWAPAY_API_TOKEN` | Token API (dashboard PawaPay) |
+| `PAWAPAY_BASE_URL` | `https://api.sandbox.pawapay.io` (sandbox) ou `https://api.pawapay.io` (prod) |
+| `PAWAPAY_WEBHOOK_SECRET` | Secret de vérification du webhook (optionnel) |
+| `PAWAPAY_CORRESPONDENT_MTN` | Code opérateur MTN (`MTN_MOMO_CMR`) |
+| `PAWAPAY_CORRESPONDENT_ORANGE` | Code opérateur Orange (`ORANGE_CMR`) |
+| `PAYMENT_DEFAULT_PROVIDER` | `pawapay` |
+
+> **Source de vérité = le webhook / le statut PawaPay**, jamais le retour immédiat du front. `raw_webhook` est conservé pour l'audit.
 
 ---
 
@@ -297,25 +354,38 @@ const pdfUrl = `https://<app>.vercel.app/api/invoices/${invoice.id}/download`;
 ## Structure du projet
 
 ```
+middleware.js                 # protège les routes admin (Supabase Auth)
 app/
-├── api/invoices/
-│   ├── route.js              # GET (liste) + POST (créer)
-│   └── [id]/
-│       ├── route.js          # GET + PUT + DELETE
-│       ├── download/route.js # GET → PDF
-│       └── send/route.js     # POST → email
+├── api/
+│   ├── invoices/
+│   │   ├── route.js          # GET (liste) + POST (créer)
+│   │   └── [id]/
+│   │       ├── route.js      # GET + PUT + DELETE
+│   │       ├── download/     # GET → PDF
+│   │       ├── send/         # POST → email
+│   │       └── pay/          # POST → initier paiement
+│   ├── transactions/[id]/status/  # GET → polling statut
+│   ├── webhooks/pawapay/     # POST → callback PawaPay
+│   └── openapi/              # spec OpenAPI
+├── login/page.js             # connexion
 ├── dashboard/page.js
-├── invoices/
-│   ├── page.js               # liste
-│   ├── new/page.js
-│   └── [id]/
-│       ├── page.js           # détail
-│       └── edit/page.js
+├── invoices/ …               # liste / new / [id] / edit
+├── transactions/page.js      # vue centralisée
+├── pay/[id]/page.js          # page de paiement publique
+├── docs/page.js              # Swagger UI
 └── layout.js
-components/                    # Sidebar, formulaire, aperçus, actions
+components/                    # Sidebar, formulaires, aperçus, PaymentForm
 lib/
-├── supabase.js               # client Supabase (lazy)
-├── pdf.js                    # génération PDF (@react-pdf/renderer)
-└── email.js                  # envoi email (Nodemailer)
-supabase/schema.sql           # schéma de la base
+├── supabase.js               # client service-role (API, lazy)
+├── supabase/client.js        # client navigateur (auth)
+├── supabase/server.js        # client serveur lié aux cookies (auth)
+├── payments/
+│   ├── provider.js           # interface PaymentProvider
+│   ├── pawapay.js            # adaptateur PawaPay
+│   └── index.js              # sélecteur de provider
+├── invoice-utils.js          # total facture + normalisation numéro
+├── pdf.js · email.js · openapi.js
+supabase/
+├── schema.sql                # table invoices
+└── transactions.sql          # table transactions
 ```

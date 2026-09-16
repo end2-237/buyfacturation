@@ -1,24 +1,40 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, Plus, Code2 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard, FileText, Plus, Code2, CreditCard, LogOut } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 const nav = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Tableau de bord" },
   { href: "/invoices", icon: FileText, label: "Factures" },
   { href: "/invoices/new", icon: Plus, label: "Nouvelle facture" },
+  { href: "/transactions", icon: CreditCard, label: "Transactions" },
   { href: "/docs", icon: Code2, label: "Documentation API" },
 ];
 
+// Routes publiques : pas de sidebar admin.
+const HIDDEN = ["/login"];
+
 export default function Sidebar() {
   const path = usePathname();
+  const router = useRouter();
+
+  if (HIDDEN.includes(path) || path.startsWith("/pay")) return null;
+
+  async function logout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
+
   return (
     <aside style={{ width: 220, background: "#0D1B2E", display: "flex", flexDirection: "column", padding: "24px 0" }}>
       <div style={{ padding: "0 20px 24px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
         <div style={{ color: "#DD5509", fontWeight: "bold", fontSize: 16 }}>BUYTICLE ETS</div>
-        <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginTop: 2 }}>Facturation</div>
+        <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginTop: 2 }}>Facturation & Paiement</div>
       </div>
-      <nav style={{ marginTop: 16 }}>
+      <nav style={{ marginTop: 16, flex: 1 }}>
         {nav.map(({ href, icon: Icon, label }) => {
           const active = path === href || (href !== "/dashboard" && path.startsWith(href));
           return (
@@ -28,7 +44,7 @@ export default function Sidebar() {
               color: active ? "#DD5509" : "rgba(255,255,255,0.7)",
               background: active ? "rgba(221,85,9,0.13)" : "transparent",
               borderLeft: active ? "3px solid #DD5509" : "3px solid transparent",
-              fontSize: 13, transition: "all .15s",
+              fontSize: 13,
             }}>
               <Icon size={16} />
               {label}
@@ -36,6 +52,13 @@ export default function Sidebar() {
           );
         })}
       </nav>
+      <button onClick={logout} style={{
+        display: "flex", alignItems: "center", gap: 10, margin: "0 20px",
+        background: "transparent", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6,
+        color: "rgba(255,255,255,0.7)", padding: "9px 12px", fontSize: 13, cursor: "pointer",
+      }}>
+        <LogOut size={15} /> Déconnexion
+      </button>
     </aside>
   );
 }
