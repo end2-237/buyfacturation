@@ -20,7 +20,10 @@ export async function GET(_, { params }) {
   // Sinon, réconcilier auprès du provider (source de vérité).
   try {
     const provider = getPaymentProvider(tx.provider);
-    const { statut } = await provider.verifierStatut(tx.provider_tx_id);
+    // Un décaissement (payout) se vérifie sur l'endpoint payouts.
+    const { statut } = tx.source === "payout"
+      ? await provider.verifierStatutPayout(tx.provider_tx_id)
+      : await provider.verifierStatut(tx.provider_tx_id);
 
     if (statut !== tx.statut) {
       await supabase.from("transactions").update({ statut }).eq("id", tx.id);

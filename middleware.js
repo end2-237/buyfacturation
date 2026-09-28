@@ -48,6 +48,9 @@ export async function middleware(request) {
   return response;
 }
 
+// Le middleware ne s'exécute QUE sur les pages admin protégées.
+// /pay, /api, /login et les assets ne le déclenchent pas (évite le timeout
+// d'authentification sur la page de paiement publique).
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: ["/dashboard/:path*", "/invoices/:path*", "/transactions/:path*", "/docs/:path*"],
 };
