@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutGrid, FileText, Plus, CreditCard, Code2, LogOut, Search } from "lucide-react";
+import { LayoutGrid, FileText, Plus, CreditCard, Send, Code2, LogOut, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 const LOGO = "https://alrbokstfwwlvbvghrqr.supabase.co/storage/v1/object/public/vendor-assets/buylogo.png";
@@ -13,6 +13,7 @@ const RAIL = [
   { href: "/invoices", icon: FileText, title: "Factures" },
   { href: "/invoices/new", icon: Plus, title: "Nouvelle facture" },
   { href: "/transactions", icon: CreditCard, title: "Transactions" },
+  { href: "/payouts", icon: Send, title: "Décaissements" },
   { href: "/docs", icon: Code2, title: "Documentation" },
 ];
 
@@ -44,6 +45,13 @@ function contextFor(path) {
         { label: "En attente", href: "/transactions?status=PENDING" },
         { label: "Payées", href: "/transactions?status=COMPLETED" },
         { label: "Échouées", href: "/transactions?status=FAILED" },
+      ] }] };
+  }
+  if (path.startsWith("/payouts")) {
+    return { title: "Décaissements", subtitle: "Envois Mobile Money",
+      groups: [{ label: "Voir aussi", items: [
+        { label: "Transactions", href: "/transactions" },
+        { label: "Factures", href: "/invoices" },
       ] }] };
   }
   if (path.startsWith("/docs")) {

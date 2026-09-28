@@ -52,5 +52,5 @@ export async function middleware(request) {
 // /pay, /api, /login et les assets ne le déclenchent pas (évite le timeout
 // d'authentification sur la page de paiement publique).
 export const config = {
-  matcher: ["/dashboard/:path*", "/invoices/:path*", "/transactions/:path*", "/docs/:path*"],
+  matcher: ["/dashboard/:path*", "/invoices/:path*", "/transactions/:path*", "/payouts/:path*", "/docs/:path*"],
 };
