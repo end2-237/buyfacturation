@@ -272,6 +272,28 @@ const pdfUrl = `https://<app>.vercel.app/api/invoices/${invoice.id}/download`;
 
 ---
 
+## Collectes pour les applications (API v1)
+
+Pour encaisser un montant **sans facture** depuis une autre application (Master Break, Camille…).
+
+**Configuration** (Vercel) : une clé par application, au moins 16 caractères.
+
+```
+BUYFACT_APPS=kix:une-cle-longue-et-secrete,camille:une-autre-cle
+```
+
+Puis exécuter une fois `supabase/migration_collectes_apps.sql` dans le SQL Editor.
+
+| Route | Rôle |
+|---|---|
+| `POST /api/v1/collectes` | Lance l'encaissement. Corps : `{ reference (UUID v4), montant, numero, operateur?, description?, callbackUrl? }`. `operateur` (`MTN`/`ORANGE`) est déduit du numéro s'il manque. Rejouer la même `reference` rend la même collecte. |
+| `GET /api/v1/collectes/:reference` | Statut, redemandé à pawaPay tant qu'il n'est pas final (`COMPLETED`, `FAILED`, `EXPIRED`). C'est **la** source à croire avant de créditer. |
+| `GET /api/v1/operateurs` | Ce que le compte pawaPay autorise vraiment : encaissement / décaissement par opérateur, montants min/max. |
+
+Toutes demandent l'en-tête `x-api-key: <clé de l'app>`.
+
+**Notification** : à chaque changement de statut reçu de pawaPay, buyfacturation fait un `POST` sur `callbackUrl` avec `{ reference, statut, montant, operateur, raison }` et l'en-tête `x-buyticle-signature: sha256=<HMAC-SHA256 du corps, avec la clé de l'app>`. L'application vérifie la signature, puis redemande le statut avec `GET /api/v1/collectes/:reference` avant de créditer.
+
 ## Interface web
 
 | Route | Accès | Description |
