@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { getPaymentProvider } from "@/lib/payments";
 import { NextResponse } from "next/server";
+import { prevenirApp } from "@/lib/apps";
 
 // POST /api/webhooks/pawapay
 // Callback de confirmation PawaPay. Source de vérité du paiement.
@@ -17,7 +18,7 @@ export async function POST(request) {
   }
 
   // 2. Parser
-  const { providerTxId, statut } = provider.parseWebhook(payload);
+  const { providerTxId, statut, raison } = provider.parseWebhook(payload);
   if (!providerTxId) {
     return NextResponse.json({ error: "depositId manquant" }, { status: 400 });
   }
@@ -32,7 +33,13 @@ export async function POST(request) {
 
   // 4. Mettre à jour transaction + facture
   await supabase.from("transactions")
-    .update({ statut, raw_webhook: payload }).eq("id", tx.id);
+    .update({ statut, raw_webhook: payload, ...(raison ? { raison } : {}) }).eq("id", tx.id);
+
+  // Une collecte venue d'une application (Master Break, Camille…) : on la
+  // prévient, pour qu'elle crédite sans attendre sa prochaine interrogation.
+  if (tx.app && tx.statut !== statut) {
+    await prevenirApp({ ...tx, statut, raison: raison || tx.raison });
+  }
 
   if (tx.facture_id) {
     if (statut === "COMPLETED") {
