@@ -10,6 +10,7 @@ const TYPE_BADGE = {
   abonnement:   { label: "Abonnement",      bg: "#FEF0E8", fg: "#DD5509" },
   bon_commande: { label: "Bon de commande", bg: "#EDE9FE", fg: "#5B21B6" },
   recu:         { label: "Reçu",            bg: "#DCFCE7", fg: "#0F7B4F" },
+  proforma:     { label: "Proforma",        bg: "#FFEDD5", fg: "#C2410C" },
 };
 
 
@@ -51,6 +52,7 @@ export default async function InvoicesPage({ searchParams }) {
           <option value="standard">Standard</option>
           <option value="abonnement">Abonnement</option>
           <option value="bon_commande">Bon de commande</option>
+          <option value="proforma">Proforma</option>
           <option value="recu">Reçu de versement</option>
         </select>
         <select name="status" defaultValue={status}
